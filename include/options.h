@@ -36,6 +36,7 @@ typedef struct TdsFdwOptionSet
 	int fdw_startup_cost;
 	int fdw_tuple_cost;
 	int local_tuple_estimate;
+	bool keep_untranslatable_types;
 } TdsFdwOptionSet;
 
 void tdsValidateOptions(List *options_list, Oid context, TdsFdwOptionSet* option_set);

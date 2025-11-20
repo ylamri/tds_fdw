@@ -118,6 +118,13 @@ Those parameters in summary are comparable to the SQL Server option *ANSI_DEFAUL
 
 This follows the behavior of the native ODBC and OLEDB driver for SQL Servers, which explicitly turn them `OFF` if not configured otherwise.
 
+* *keep_untranslatable_types*
+
+Required: No
+
+This option allows for specific servers to keep or not keep untranslatable types
+
+
 #### Foreign table parameters accepted in server definition:
 
 Some foreign table options can also be set at the server level. Those include:

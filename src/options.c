@@ -72,8 +72,9 @@ static struct TdsFdwOption valid_options[] =
 	{ "row_estimate_method",	ForeignTableRelationId },
 	{ "match_column_names",		ForeignTableRelationId },
 	{ "use_remote_estimate",	ForeignTableRelationId },
-	{ "local_tuple_estimate",	ForeignTableRelationId },
+	{ "local_tuple_estimate",		ForeignTableRelationId },
 	{ "column_name", 			AttributeRelationId },
+	{ "keep_untranslatable_types", 		ForeignServerRelationId },
 	{ NULL,						InvalidOid }
 };
 
@@ -444,6 +445,11 @@ void tdsGetForeignServerOptions(List *options_list, TdsFdwOptionSet *option_set)
 					));
 					
 			option_set->fdw_tuple_cost = atoi(defGetString(def));	
+		}
+		
+		else if (strcmp(def->defname, "keep_untranslatable_types") == 0)
+		{
+			option_set->keep_untranslatable_types = defGetBoolean(def);	
 		}
 	}
 	
@@ -957,6 +963,7 @@ void tdsOptionSetInit(TdsFdwOptionSet* option_set)
 	option_set->fdw_startup_cost = 0;
 	option_set->fdw_tuple_cost = 0;
 	option_set->local_tuple_estimate = 0;
+	option_set->keep_untranslatable_types = false;
 	
 	#ifdef DEBUG
 		ereport(NOTICE,

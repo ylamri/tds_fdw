@@ -3641,10 +3641,21 @@ tdsImportSybaseSchema(ImportForeignSchemaStmt *stmt, DBPROCESS  *dbproc,
 	 * should save a few cycles to not process excluded tables in the
 	 * first place.)
 	 */
-	appendStringInfoString(&buf,
+	appendStringInfoString(&buf, 
 						   "SELECT so.name AS table_name, "
-						   "  sc.name AS column_name, "
-						   "  st.name AS data_type, "
+						   "  sc.name AS column_name, ");
+
+	if (option_set.keep_untranslatable_types)
+		appendStringInfoString(&buf, " st.name AS data_type, ");
+	else
+		appendStringInfoString(&buf,
+						   "  CASE WHEN st.usertype < 100 "
+						   "     THEN st.name "
+						   "     ELSE (SELECT s1.name FROM dbo.systypes s1 WHERE s1.usertype = "
+						   "       (SELECT min(s2.usertype) FROM dbo.systypes s2 WHERE s2.type = st.type)) "
+						   "  END AS data_type, ");
+
+	appendStringInfoString(&buf,
 						   "  SUBSTRING(sm.text, 10, 255) AS column_default, "
 						   "  CASE (sc.status & 0x08) "
 						   "    WHEN 8 THEN 'YES' ELSE 'NO' "
@@ -3658,6 +3669,7 @@ tdsImportSybaseSchema(ImportForeignSchemaStmt *stmt, DBPROCESS  *dbproc,
 						   "  LEFT JOIN dbo.systypes st ON st.usertype = sc.usertype "
 						   "  LEFT JOIN dbo.syscomments sm ON sm.id = sc.cdefault "
 						   "WHERE so.type IN ('U','V') AND su.name = ");
+
 
 	deparseStringLiteral(&buf, stmt->remote_schema);
 
@@ -3915,6 +3927,11 @@ tdsImportSybaseSchema(ImportForeignSchemaStmt *stmt, DBPROCESS  *dbproc,
 					/* Other types */
 					else if (strcmp(data_type, "xml") == 0)
 						appendStringInfoString(&buf, " xml");
+					else if (option_set.keep_untranslatable_types)
+					{
+						appendStringInfoString(&buf, " ");
+						appendStringInfoString(&buf, data_type);
+					}
 					else
 					{
 						ereport(DEBUG3,
